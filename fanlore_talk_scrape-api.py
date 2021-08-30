@@ -63,5 +63,6 @@ graph = px.line(
 
 graph.update_xaxes(rangeslider_visible=True)
 
+graph.write_html("talk-rc.html")
 
 graph.show()
