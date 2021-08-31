@@ -4,14 +4,10 @@ import requests
 import json
 from collections import Counter
 import plotly.express as px
-
-
-tsList = [] #Empty list to store the timestamps we will get later
-
+from datetime import datetime
 
 #convert 90 days into seconds - for rcend parameter below
 rangeEnd = 60*60*24*90
-
 
 #dictionary w/ parameters for the API request
 parameters = {
@@ -24,6 +20,8 @@ parameters = {
     "rcend" : f"{rangeEnd}",
     "rclimit" : 500,
 }
+
+tsList = []  # Empty list to store the timestamps we will get later
 
 #ask the Fanlore server for the data and load it with JSON
 r = requests.get("https://fanlore.org/w/api.php", params = parameters)
@@ -48,21 +46,36 @@ for item in tsList:
 tsCounter = Counter(tsListTrimmed) #This one seems to be ordered from highest to lowest count...
 graphData = dict(tsCounter) #While this one is chronological
 
-### Graph ####
+#trying to see if the days of the week matter at all...
+tsListTrimmed_days = []
+for each in tsListTrimmed:
+    tsListTrimmed_days.append(datetime.strptime(each,"%Y-%m-%d"))
 
-x_val = list(graphData.keys()) #dates
-y_val = list(graphData.values()) #freq
+newlist = []
+for each in tsListTrimmed_days:
+    newlist.append(tsListTrimmed_days(datetime.strftime(each,"%A"))[0])
 
-print("Making the graph... Check your browser!")
 
-graph = px.line(
-    x=x_val,
-    y=y_val,
-    title="Frequency of Talk Page edits on Fanlore.org",
-    labels={"x" : "Date","y" : "# of Edits"})
+print(newlist[7])
 
-graph.update_xaxes(rangeslider_visible=True)
 
-graph.write_html("talk-rc.html")
 
-graph.show()
+
+# ### Graph ####
+
+# x_val = list(graphData.keys()) #dates
+# y_val = list(graphData.values()) #freq
+
+# print("Making the graph... Check your browser!")
+
+# graph = px.line(
+#     x=x_val,
+#     y=y_val,
+#     title="Frequency of Talk Page edits on Fanlore.org, last 90 days",
+#     labels={"x" : "Date","y" : "# of Edits"})
+
+# graph.update_xaxes(rangeslider_visible=True)
+
+# graph.write_html("talk-rc.html")
+
+# graph.show()
