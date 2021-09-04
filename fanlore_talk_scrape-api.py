@@ -2,6 +2,7 @@
 
 import requests
 import json
+
 from collections import Counter, OrderedDict
 import pandas
 import plotly.express as px
@@ -24,78 +25,100 @@ parameters = {
 
 tsList = []  # Empty list to store the timestamps we will get later
 
-#ask the Fanlore server for the data and load it with JSON
-r = requests.get("https://fanlore.org/w/api.php", params = parameters)
+#ask the Fanlore server for the data and load it with JSON - feat. Continue loop by Fox
+done = False
+
+
+#not loop version:
+r = requests.get("https://fanlore.org/w/api.php", params=parameters)
+print("Sending query to fanlore... - reponse is: ", r.status_code)
 scrape = json.loads(r.content)
 
-print("Edits to talk pages on www.fanlore.org - past 90 days")
-print()
-print("Paging fanlore - reponse is: ", r.status_code)
+
+# loop version
+# while not done:
+#     r = requests.get("https://fanlore.org/w/api.php", params = parameters)
+#     print("Sending query to fanlore... - reponse is: ", r.status_code)
+#     scrape = json.loads(r.content)
+#     # Check if the continue key is in the data
+#     if 'continue' in scrape:
+#         # Set the rccontinue parameter for the next loop.
+#         parameters['rccontinue'] = scrape['continue']['rccontinue']
+#         print(f"Set new continue timestamp of {parameters['rccontinue']}")
+#     # If it isn't, set done True so the loop stops after finishing this cycle.
+#     else:
+#         done = True
+
 
 for change in scrape['query']['recentchanges']:
     tsList.append(change['timestamp'])
 
 
 # This list will hold just the date part of the timestamp.
-tsListTrimmed = []
+tsListTrim = []
 
 for item in tsList:
-    tsListTrimmed.append(item.split('T')[0])
+    tsListTrim.append(item.split('T')[0])
     
-print(f"Retrieved {len(tsListTrimmed)} edits from the server. (Maximum is 500)")
-print(f"The latest date is {tsListTrimmed[0]}. The earliest date is {tsListTrimmed[(len(tsListTrimmed)-1)]}")
+print(f"Retrieved {len(tsListTrim)} edits from the server. (Maximum is 500)")
+print(f"The latest date is {tsListTrim[0]}. The earliest date is {tsListTrim[(len(tsListTrim)-1)]}")
+print()
 
-tsCounter = Counter(tsListTrimmed) #This one seems to be ordered from highest to lowest count...
-graphData = dict(tsCounter) #While this one is chronological
+tsCounter = Counter(tsListTrim) #This one seems to be ordered from highest to lowest count...
 
-#trying to see if the days of the week matter at all...
-tsListTrimmed_days = []
-for each in tsListTrimmed:
-    tsListTrimmed_days.append(datetime.strptime(each,"%Y-%m-%d"))
+print(f'The dates with the top 5 most edits are:{(tsCounter.most_common(3))}')
+print()
+print(f'The average number of edits per day is {sum(tsCounter.values())/len(tsListTrim)}')
 
-days_List = []
-for each in tsListTrimmed_days:
-    # days_List.append(datetime.strftime(each,"%A"))
-    days_List.append(datetime.strftime(each, "%u-%A"))
+
+
+# #trying to see if the days of the week matter at all...
+# tsListTrim_days = []
+# for each in tsListTrim:
+#     tsListTrim_days.append(datetime.strptime(each,"%Y-%m-%d"))
+
+# days_List = []
+# for each in tsListTrim_days:
+#     # days_List.append(datetime.strftime(each,"%A"))
+#     days_List.append(datetime.strftime(each, "%u-%A"))
     
 
-days_Listcount = Counter(days_List)
-days_count_sorted = OrderedDict(sorted(days_Listcount.items(), key=lambda t: t[0]))
+# days_Listcount = Counter(days_List)
+# days_count_sorted = OrderedDict(sorted(days_Listcount.items(), key=lambda t: t[0]))
 
-days_df = pandas.DataFrame(list(days_count_sorted.items()), columns=['Day', 'Edits'])
-
-
-# # ### Bar Graph ####
-x_days = list(days_count_sorted.keys())
-y_days = list(days_count_sorted.values())
-
-graph2 = px.bar(
-    days_df,
-    title="Days with highest Talk page activity",
-    x='Day',
-    y='Edits',
-    labels={"x":"Day","y":"Edits"},
-    color='Day',
-    color_discrete_sequence=px.colors.qualitative.Plotly,
-    template="plotly",
-    )
-
-graph2.show()
+# days_df = pandas.DataFrame(list(days_count_sorted.items()), columns=['Day', 'Edits'])
 
 
-# ### Line Graph ####
+# # # ### Bar Graph ####
 
-x_val = list(graphData.keys()) #dates
-y_val = list(graphData.values()) #freq
+# daysGraph = px.bar(
+#     days_df,
+#     title="Days with highest Talk page activity",
+#     x='Day',
+#     y='Edits',
+#     labels={"x":"Day","y":"Edits"},
+#     color='Day',
+#     color_discrete_sequence=px.colors.qualitative.Plotly,
+#     template="plotly",
+#     )
 
-print("Making the graph... Check your browser!")
+# daysGraph.show()
 
-graph = px.line(
-    x=x_val,
-    y=y_val,
-    title="Frequency of Talk Page edits on Fanlore.org, last 90 days",
-    labels={"x" : "Date","y" : "# of Edits"})
 
-graph.update_xaxes(rangeslider_visible=True)
+# # ### Line Graph ####
 
-graph.show()
+# freqData = dict(tsCounter)
+
+
+# ts_x = list(freqData.keys()) #dates
+# ts_y = list(freqData.values()) #freq
+
+# freqGraph = px.line(
+#     x=ts_x,
+#     y=ts_y,
+#     title="Frequency of Talk Page edits on Fanlore.org, last 90 days",
+#     labels={"x" : "Date","y" : "# of Edits"})
+
+# freqGraph.update_xaxes(rangeslider_visible=True)
+
+# freqGraph.show()
