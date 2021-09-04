@@ -1,6 +1,6 @@
-requests
+requests==2.25.1
 json
 collections 
-pandas
-plotly.express
+pandas==1.2.4
+plotly==4.14.3
 datetime
